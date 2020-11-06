@@ -1,1 +1,1 @@
-# cs334-project
+# CS334 Project
