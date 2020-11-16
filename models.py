@@ -1,5 +1,6 @@
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import Ridge
 import numpy as np
 import pandas as pd
 import argparse
@@ -26,11 +27,41 @@ def pcaCreate(xFeat, y, xTest, yTest):
 """
 Linear Regression
 https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LinearRegression.html
+
+Lasso and Ridge
+https://scikit-learn.org/stable/modules/linear_model.html
+https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.Ridge.html
 """
 
 def linearRegressionModel(xFeat, y, xTest, yTest):
+    #Linear Regression does not seem to have any Parameters to Set
+        #Instead of setting parameters might be best to run LR once with Rige Regularization and Once with Lasso
+
+    #fit and predict with pure LR
     lr= LinearRegression()
-    grid_LR
+    lrFit=lr.fit(xFeat,y)
+    yHatLR=lrFit.predict(xTest)
+    scoreLR=lrFit.score(xTest,yTest)
+
+    return (yHatLR,scoreLR)
+
+
+def linearRegressionRidgeModel(xFeat, y, xTest, yTest):
+    #requires tuning of several parameters: 
+            #alpha {float, ndarray of shape (n_targets,)}, default=1.0
+            #solver{‘auto’, ‘svd’, ‘cholesky’, ‘lsqr’, ‘sparse_cg’, ‘sag’, ‘saga’}, default=’auto’
+
+    
+
+    #fit and predict with LR Ridge
+    lr= LinearRegression()
+    lrFit=lr.fit(xFeat,y)
+    yHatLR=lrFit.predict(xTest)
+    scoreLR=lrFit.score(xTest,yTest)
+
+    return (yHatLR,scoreLR)
+
+
 
 
 
@@ -75,7 +106,9 @@ def main():
 
 
     #run Linear regression
-    linearRegressionModel(xTrainPCA, yTrain,xTestPCA,yTest)
+    yHatLR,scoreLR=linearRegressionModel(xTrainPCA, yTrain,xTestPCA,yTest)
+    #run Linear Regression Ridge
+    yHatLRRidge,scoreLRRidge=linearRegressionRidgeModel(xTrainPCA, yTrain,xTestPCA,yTest)
 
 
 if __name__ == "__main__":
