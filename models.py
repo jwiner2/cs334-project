@@ -49,8 +49,8 @@ def linearRegressionModel(xFeat, y, xTest, yTest):
     return (yHatLR,scoreLR)
 
 
-#todo: once this works we might want to make it easily switchable to Lasso (or just copy into seperate lasso function)
-def linearRegressionRidgeModel(xFeat, y, xTest, yTest):
+#todo: make sure this works
+def linearRegressionRidgeModel(xFeat, y, xTest, yTest, models,params):
     #requires tuning of several parameters: 
             #alpha {float, ndarray of shape (n_targets,)}, default=1.0
             #solver{‘auto’, ‘svd’, ‘cholesky’, ‘lsqr’, ‘sparse_cg’, ‘sag’, ‘saga’}, default=’auto’
@@ -58,18 +58,29 @@ def linearRegressionRidgeModel(xFeat, y, xTest, yTest):
     alphaV = [0.0001,0.001, 0.01, 0.1, 1, 10, 100, 1000]
     solverV=['auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga']
     paramsGV={'alpha':alphaV, 'solver':solverV}
-    gridCV_lrR = GridSearchCV(estimator=Ridge, param_grid=paramsGV, scoring='r2', verbose=1, n_jobs=-1)
 
-    gridCV_lrR.fit(xFeat, y)
+    model= Ridge()
+
+    yHatLRR, scoreLRR= gridSearchModel(xFeat,y,xTest,yTest,model,paramsGV)
+    return (yHatLRR,scoreLRR)
+
+
+#todo: make sure this works
+def gridSearchModel(xFeat, y, xTest, yTest, model,params):
+    #grid search
+    gridCV = GridSearchCV(estimator=model, param_grid=params, scoring='r2', verbose=1, n_jobs=-1)
+
+    #fit
+    gridCV.fit(xFeat, y)
 
     # extract best estimator
-    print(gridCV_lrR.best_estimator_)
+    print(gridCV.best_estimator_)
 
-    #fit and predict with LR Ridge
-    yHatLRR=gridCV_lrR.predict(xTest)
-    scoreLRR=gridCV_lrR.score(xTest, yTest)
+    #predict and score
+    yHatGS=gridCV.predict(xTest)
+    scoreGS=gridCV.score(xTest, yTest)
 
-    return (yHatLRR,scoreLRR)
+    return (yHatGS,scoreGS)
 
 
 def file_to_numpy(filename):
