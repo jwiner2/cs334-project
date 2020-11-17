@@ -1,8 +1,12 @@
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import Ridge
+from sklearn.linear_model import Lasso
+from sklearn.linear_model import Perceptron
+from sklearn.tree import DecisionTreeRegressor
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
 import numpy as np
 import pandas as pd
 import argparse
@@ -51,7 +55,7 @@ def linearRegressionModel(xFeat, y, xTest, yTest):
 
 
 #todo: make sure this works
-def linearRegressionRidgeModel(xFeat, y, xTest, yTest, models,params):
+def linearRegressionRidgeModel(xFeat, y, xTest, yTest,model):
     #requires tuning of several parameters: 
             #alpha {float, ndarray of shape (n_targets,)}, default=1.0
             #solver{‘auto’, ‘svd’, ‘cholesky’, ‘lsqr’, ‘sparse_cg’, ‘sag’, ‘saga’}, default=’auto’
@@ -60,13 +64,45 @@ def linearRegressionRidgeModel(xFeat, y, xTest, yTest, models,params):
     solverV=['auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga']
     paramsGV={'alpha':alphaV, 'solver':solverV}
 
-    model= Ridge()
+    yHatLRR, scoreLRR= gridSearchModel(xFeat,y,xTest,yTest,model,paramsGV)
+    return (yHatLRR,scoreLRR)
+
+def linearRegressionLassoModel(xFeat, y, xTest, yTest,model):
+    #requires tuning of several parameters:
+            #alpha {float, ndarray of shape (n_targets,)}, default=1.0
+
+    alphaV = [0.0001,0.001, 0.01, 0.1, 1, 10, 100, 1000]
+    paramsGV={'alpha':alphaV}
 
     yHatLRR, scoreLRR= gridSearchModel(xFeat,y,xTest,yTest,model,paramsGV)
     return (yHatLRR,scoreLRR)
 
 
-#todo: make sure this works
+def decTreeRegModel(xFeat, y, xTest, yTest):
+    criterionV=['mse', 'friedman_mse', 'mae']
+    max_depthV=[2,4,6,8,10,12,14]
+    min_samples_leafV=[10,20,30,40,50,100]
+    paramsGV={'criterion':criterionV,'max_depth':max_depthV,'min_samples_leaf':min_samples_leafV}
+
+    model = DecisionTreeRegressor()
+
+    yHatLRR, scoreLRR= gridSearchModel(xFeat,y,xTest,yTest,model,paramsGV)
+    return (yHatLRR,scoreLRR)
+
+def perceptronModel(xFeat,y,xTest,yTest):
+    #possibly add in other perams Max Iter
+    penaltyV=['l2', 'l1', 'elasticnet']
+    alphaV = [0.0001, 0.001, 0.01, 0.1, 1, 10, 100, 1000]
+
+    paramsGV = {'alpha': alphaV, 'penalty':penaltyV}
+
+    model=Perceptron()
+
+    yHatLRR, scoreLRR= gridSearchModel(xFeat,y,xTest,yTest,model,paramsGV)
+    return (yHatLRR,scoreLRR)
+
+
+
 def gridSearchModel(xFeat, y, xTest, yTest, model,params):
     #grid search
     gridCV = GridSearchCV(estimator=model, param_grid=params, scoring='r2', verbose=1, n_jobs=-1)
@@ -84,6 +120,7 @@ def gridSearchModel(xFeat, y, xTest, yTest, model,params):
     return (yHatGS,scoreGS)
 
 
+
 def file_to_numpy(filename):
     """
     Read an input file and convert it to numpy
@@ -98,52 +135,70 @@ def main():
     """
     #### Used to set up data files
     # set up the program to take in arguments from the command line
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--vectorF",
-                        help="filename for features of the training data",
-                        default="data/vectorized_data.csv") #todo: need to change to correct file
-    args = parser.parse_args()
-    xFull = pd.read_csv(args.vectorF)
-    yFull = xFull["price"]
-    xFull= xFull.iloc[:,16:]
-
-    xTrain,xTest,yTrain,yTest= train_test_split( xFull, yFull, test_size=0.33, random_state=42)
-
-    xTrain.to_csv("data/xTrain.csv", index=False)
-    yTrain.to_csv("data/yTrain.csv", index=False)
-    xTest.to_csv("data/xTest.csv", index=False)
-    yTest.to_csv("data/yTest.csv", index=False)
-
     # parser = argparse.ArgumentParser()
-    # parser.add_argument("--xTrain",
+    # parser.add_argument("--vectorF",
     #                     help="filename for features of the training data",
-    #                     default="data/xTrain.csv") #todo: need to change to correct file
-    # parser.add_argument("--yTrain",
-    #                     help="filename for labels associated with training data",
-    #                     default="data/yTrain.csv")#todo: need to change to correct file
-    # parser.add_argument("--xTest",
-    #                     help="filename for features of the test data",
-    #                     default="data/xTest.csv")#todo: need to change to correct file
-    # parser.add_argument("--yTest",
-    #                     help="filename for labels associated with the test data",
-    #                     default="data/yTest.csv")#todo: need to change to correct file
-    #
+    #                     default="data/vectorized_data.csv") #todo: need to change to correct file
     # args = parser.parse_args()
-    # # load the train and test data assumes you'll use numpy
-    # xTrain = file_to_numpy(args.xTrain)
-    # yTrain = file_to_numpy(args.yTrain)
-    # xTest = file_to_numpy(args.xTest)
-    # yTest = file_to_numpy(args.yTest)
+    # xFull = pd.read_csv(args.vectorF)
+    # yFull = xFull["price"]
+    # xFull= xFull.iloc[:,16:]
+    #
+    # xTrain,xTest,yTrain,yTest= train_test_split( xFull, yFull, test_size=0.33, random_state=42)
+    #
+    # xTrain.to_csv("data/xTrain.csv", index=False)
+    # yTrain.to_csv("data/yTrain.csv", index=False)
+    # xTest.to_csv("data/xTest.csv", index=False)
+    # yTest.to_csv("data/yTest.csv", index=False)
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--xTrain",
+                        help="filename for features of the training data",
+                        default="data/xTrain.csv")
+    parser.add_argument("--yTrain",
+                        help="filename for labels associated with training data",
+                        default="data/yTrain.csv")
+    parser.add_argument("--xTest",
+                        help="filename for features of the test data",
+                        default="data/xTest.csv")
+    parser.add_argument("--yTest",
+                        help="filename for labels associated with the test data",
+                        default="data/yTest.csv")
+
+    args = parser.parse_args()
+    # load the train and test data assumes you'll use numpy
+    xTrain = pd.read_csv(args.xTrain)
+    yTrain = pd.read_csv(args.yTrain)
+    xTest = pd.read_csv(args.xTest)
+    yTest = pd.read_csv(args.yTest)
 
 
     #the linear regression as well as PCA are having a hard time working with the catagorical data
     #run pca on data
-    # xTrainPCA, xTestPCA = pcaCreate(xTrain,yTrain,xTest,yTest)
+    xTrainPCA, xTestPCA = pcaCreate(xTrain,yTrain,xTest,yTest)
 
     # #run Linear regression
-    # yHatLR,scoreLR=linearRegressionModel(xTrain, yTrain,xTest,yTest)
-    # #run Linear Regression Ridge
-    # yHatLRRidge,scoreLRRidge=linearRegressionRidgeModel(xTrainPCA, yTrain,xTestPCA,yTest)
+    yHatLR,scoreLR=linearRegressionModel(xTrain, yTrain,xTest,yTest)
+    print("LR Score \t"+str(scoreLR))
+
+    # # #run Linear Regression Ridge
+    # yHatLRRidge,scoreLRRidge=linearRegressionRidgeModel(xTrainPCA, yTrain,xTestPCA,yTest, Ridge())
+    # print("LR Ridge Score \t" + str(scoreLRRidge))
+
+    # #run Linear Regression Lasso
+    # yHatLRLasso,scoreLRLasso=linearRegressionLassoModel(xTrainPCA, yTrain,xTestPCA,yTest, Lasso())
+    # print("LR Ridge Score \t" + str(scoreLRLasso))
+
+    #decision tree regressor
+    # yHatDTR, scoreDTR = decTreeRegModel(xTrainPCA, yTrain, xTestPCA, yTest)
+    # print("DTR Score \t" + str(scoreDTR))
+
+    #perceptron #todo: is asking to be ravelled
+    # yHatPer, scorePer = perceptronModel(xTrainPCA, yTrain, xTestPCA, yTest)
+    # print("Perceptron Score \t" + str(scorePer))
+
+
+
 
 
 if __name__ == "__main__":
