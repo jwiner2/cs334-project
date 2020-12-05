@@ -28,8 +28,9 @@ def main():
     printPercentMissingVals(df)
     tqdm.pandas(desc="Progress")
     df['stemmed'] = df['description'].progress_apply(text_stemming)
-    df.dropna(subset=['price'], inplace=True)
+    df.dropna(subset=['price','variety','province','country'], inplace=True)
     print(f"Stemmed Description:{df['stemmed']}")
+    df.drop(["taster_name","taster_twitter_handle","region_1", "region_2", "title","designation"], axis = 1, inplace=True)
     df.to_csv("data/data_stemmed.csv", index=False)
 
 if __name__ == "__main__":
