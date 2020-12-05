@@ -6,8 +6,11 @@ from sklearn.linear_model import Perceptron
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import r2_score
 import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
 import pandas as pd
 import argparse
 
@@ -98,7 +101,7 @@ def perceptronModel(xFeat,y,xTest,yTest):
 
     model=Perceptron()
 
-    yHatLRR, scoreLRR= gridSearchModel(xFeat,y,xTest,yTest,model,paramsGV)
+    yHatLRR, scoreLRR, r2LRR= gridSearchModel(xFeat,y,xTest,yTest,model,paramsGV)
     return (yHatLRR,scoreLRR)
 
 
@@ -116,9 +119,17 @@ def gridSearchModel(xFeat, y, xTest, yTest, model,params):
     #predict and score
     yHatGS=gridCV.predict(xTest)
     scoreGS=gridCV.score(xTest, yTest)
+    mseScore= mean_squared_error(yTest, yHatGS)
+    print(mseScore)
 
     return (yHatGS,scoreGS)
 
+def corralte(xTrain,yTrain):
+    df = pd.concat([xTrain, yTrain], axis=1)
+    print(df)
+    pearson = df.corr()
+    hm1 = sns.heatmap(pearson, vmin=-1, vmax=1, center=0, cmap="PuRd")
+    plt.show()
 
 
 def file_to_numpy(filename):
@@ -133,8 +144,8 @@ def main():
     """
     Main file to run from the command line.
     """
-    #### Used to set up data files
-    # set up the program to take in arguments from the command line
+    ### Used to set up data files
+    #set up the program to take in arguments from the command line
     # parser = argparse.ArgumentParser()
     # parser.add_argument("--vectorF",
     #                     help="filename for features of the training data",
@@ -142,9 +153,10 @@ def main():
     # args = parser.parse_args()
     # xFull = pd.read_csv(args.vectorF)
     # yFull = xFull["price"]
-    # xFull= xFull.iloc[:,16:]
+    # xFull2= xFull.iloc[:,16:]
+    # xFull2["points"]=xFull["points"]
     #
-    # xTrain,xTest,yTrain,yTest= train_test_split( xFull, yFull, test_size=0.33, random_state=42)
+    # xTrain,xTest,yTrain,yTest= train_test_split( xFull2, yFull, test_size=0.33, random_state=42)
     #
     # xTrain.to_csv("data/xTrain.csv", index=False)
     # yTrain.to_csv("data/yTrain.csv", index=False)
@@ -154,23 +166,27 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--xTrain",
                         help="filename for features of the training data",
-                        default="data/xTrain.csv")
+                        default="data/xtrain_binary.csv")
     parser.add_argument("--yTrain",
                         help="filename for labels associated with training data",
-                        default="data/yTrain.csv")
+                        default="data/ytrain.csv")
     parser.add_argument("--xTest",
                         help="filename for features of the test data",
-                        default="data/xTest.csv")
+                        default="data/xtest_binary.csv")
     parser.add_argument("--yTest",
                         help="filename for labels associated with the test data",
-                        default="data/yTest.csv")
+                        default="data/ytest.csv")
 
     args = parser.parse_args()
     # load the train and test data assumes you'll use numpy
-    xTrain = pd.read_csv(args.xTrain)
+    xTrain = pd.read_csv(args.xTrain).iloc[:,-30:-1]
     yTrain = pd.read_csv(args.yTrain)
-    xTest = pd.read_csv(args.xTest)
+    xTest = pd.read_csv(args.xTest).iloc[:,-30:-1]
     yTest = pd.read_csv(args.yTest)
+
+
+    corralte(xTrain,yTrain)
+
 
 
     #the linear regression as well as PCA are having a hard time working with the catagorical data
@@ -180,20 +196,20 @@ def main():
     # #run Linear regression
     yHatLR,scoreLR=linearRegressionModel(xTrain, yTrain,xTest,yTest)
     print("LR Score \t"+str(scoreLR))
-
+    #
     # # #run Linear Regression Ridge
     # yHatLRRidge,scoreLRRidge=linearRegressionRidgeModel(xTrainPCA, yTrain,xTestPCA,yTest, Ridge())
     # print("LR Ridge Score \t" + str(scoreLRRidge))
-
+    #
     # #run Linear Regression Lasso
     # yHatLRLasso,scoreLRLasso=linearRegressionLassoModel(xTrainPCA, yTrain,xTestPCA,yTest, Lasso())
     # print("LR Ridge Score \t" + str(scoreLRLasso))
-
-    #decision tree regressor
+    #
+    # #decision tree regressor
     # yHatDTR, scoreDTR = decTreeRegModel(xTrainPCA, yTrain, xTestPCA, yTest)
     # print("DTR Score \t" + str(scoreDTR))
-
-    #perceptron #todo: is asking to be ravelled
+    #
+    # #perceptron #todo: is asking to be ravelled
     # yHatPer, scorePer = perceptronModel(xTrainPCA, yTrain, xTestPCA, yTest)
     # print("Perceptron Score \t" + str(scorePer))
 
