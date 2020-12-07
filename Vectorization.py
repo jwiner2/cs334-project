@@ -38,7 +38,7 @@ def vectorizeBinary(xTrain, xTest, vocab):
     vectorizedTest = pd.DataFrame(vectorizedWordsTest.toarray(), columns = vectorizer.get_feature_names())
     return vectorizedTrain, vectorizedTest
 
-def hotEncoderWThreshold(xTrain,xTest, threshold, attributeName):
+def hotEncoderWThreshold(xTrain,xTest, threshold, attributeName):#frequent words are found in train then used in test, we do not calculate frequent words in test
     hotEncoded = pd.get_dummies(xTrain[attributeName])
     count = pd.value_counts(xTrain[attributeName], sort=False, normalize=True) < threshold
     if count.sum() == 0:
