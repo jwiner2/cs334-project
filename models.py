@@ -44,7 +44,7 @@ https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.Ridge.htm
 https://towardsdatascience.com/linear-regression-models-4a3d14b8d368
 """
 
-def linearRegressionModel(xFeat, y, xTest, yTest):
+def linearRegressionModel(xFeat, y, xTest, yTest, doCoefs):
     #Linear Regression does not seem to have any Parameters to Set
         #Instead of setting parameters might be best to run LR once with Rige Regularization and Once with Lasso
 
@@ -53,6 +53,10 @@ def linearRegressionModel(xFeat, y, xTest, yTest):
     lrFit=lr.fit(xFeat,y)
     yHatLR=lrFit.predict(xTest)
     scoreLR=lrFit.score(xTest,yTest)
+    if doCoefs:
+         featureCoefs=list(zip(lrFit.coef_[0], xFeat.columns))
+         for coef,feat in sorted(featureCoefs):
+             print(str(coef)+"\t"+str(feat))
 
     return (yHatLR,scoreLR)
 
@@ -82,9 +86,9 @@ def linearRegressionLassoModel(xFeat, y, xTest, yTest,model):
 
 
 def decTreeRegModel(xFeat, y, xTest, yTest):
-    criterionV=['mse', 'friedman_mse', 'mae']
-    max_depthV=[2,4,6,8,10,12,14]
-    min_samples_leafV=[10,20,30,40,50,100]
+    criterionV=['mae', 'mse']
+    max_depthV=[5,10,15,20]
+    min_samples_leafV=[10,20,100,200,500,1000]
     paramsGV={'criterion':criterionV,'max_depth':max_depthV,'min_samples_leaf':min_samples_leafV}
 
     model = DecisionTreeRegressor()
@@ -94,8 +98,8 @@ def decTreeRegModel(xFeat, y, xTest, yTest):
 
 def perceptronModel(xFeat,y,xTest,yTest):
     #possibly add in other perams Max Iter
-    penaltyV=['l2', 'l1', 'elasticnet']
-    alphaV = [0.0001, 0.001, 0.01, 0.1, 1, 10, 100, 1000]
+    penaltyV=['l2', 'l1']
+    alphaV = [0.01, 0.1, 1, 10]
 
     paramsGV = {'alpha': alphaV, 'penalty':penaltyV}
 
@@ -119,8 +123,8 @@ def gridSearchModel(xFeat, y, xTest, yTest, model,params):
     #predict and score
     yHatGS=gridCV.predict(xTest)
     scoreGS=gridCV.score(xTest, yTest)
-    mseScore= mean_squared_error(yTest, yHatGS)
-    print(mseScore)
+    # mseScore= mean_squared_error(yTest, yHatGS)
+    # print(mseScore)
 
     return (yHatGS,scoreGS)
 
@@ -129,6 +133,10 @@ def corralte(xTrain,yTrain):
     print(df)
     pearson = df.corr()
     hm1 = sns.heatmap(pearson, vmin=-1, vmax=1, center=0, cmap="PuRd")
+    plt.title("Corralation of Features with the Label")
+    plt.xticks(rotation=60, ha='right',fontsize=9)
+    plt.yticks(rotation=40, ha='right',fontsize=9)
+
     plt.show()
 
 
@@ -166,26 +174,26 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--xTrain",
                         help="filename for features of the training data",
-                        default="data/xtrain_binary.csv")
+                        default="data/xtrain_count.csv")
     parser.add_argument("--yTrain",
                         help="filename for labels associated with training data",
                         default="data/ytrain.csv")
     parser.add_argument("--xTest",
                         help="filename for features of the test data",
-                        default="data/xtest_binary.csv")
+                        default="data/xtest_count.csv")
     parser.add_argument("--yTest",
                         help="filename for labels associated with the test data",
                         default="data/ytest.csv")
 
     args = parser.parse_args()
     # load the train and test data assumes you'll use numpy
-    xTrain = pd.read_csv(args.xTrain).iloc[:,-30:-1]
+    xTrain = pd.read_csv(args.xTrain)
     yTrain = pd.read_csv(args.yTrain)
-    xTest = pd.read_csv(args.xTest).iloc[:,-30:-1]
+    xTest = pd.read_csv(args.xTest)
     yTest = pd.read_csv(args.yTest)
 
 
-    corralte(xTrain,yTrain)
+    # corralte(xTrain,yTrain)
 
 
 
@@ -194,24 +202,50 @@ def main():
     xTrainPCA, xTestPCA = pcaCreate(xTrain,yTrain,xTest,yTest)
 
     # #run Linear regression
-    yHatLR,scoreLR=linearRegressionModel(xTrain, yTrain,xTest,yTest)
-    print("LR Score \t"+str(scoreLR))
+    # #without PCA
+    # yHatLR,scoreLR=linearRegressionModel(xTrain, yTrain,xTest,yTest,True)
+    # print("LR Score \t"+str(scoreLR))
     #
+    # #with PCA
+    # yHatLR,scoreLR=linearRegressionModel(xTrainPCA, yTrain,xTestPCA,yTest,False)
+    # print("LR Score with PCA \t"+str(scoreLR))
+
     # # #run Linear Regression Ridge
-    # yHatLRRidge,scoreLRRidge=linearRegressionRidgeModel(xTrainPCA, yTrain,xTestPCA,yTest, Ridge())
+    #
+    # yHatLRRidge,scoreLRRidge=linearRegressionRidgeModel(xTrain, yTrain,xTest,yTest, Ridge())
     # print("LR Ridge Score \t" + str(scoreLRRidge))
     #
-    # #run Linear Regression Lasso
+    # #with PCA
+    # yHatLRRidge,scoreLRRidge=linearRegressionRidgeModel(xTrainPCA, yTrain,xTestPCA,yTest, Ridge())
+    # print("LR Ridge Score with PCA \t" + str(scoreLRRidge))
+    #
+    #
+    # # #run Linear Regression Lasso
+    # yHatLRLasso,scoreLRLasso=linearRegressionLassoModel(xTrain, yTrain,xTest,yTest, Lasso())
+    # print("LR Lasso Score \t" + str(scoreLRLasso))
+    #
     # yHatLRLasso,scoreLRLasso=linearRegressionLassoModel(xTrainPCA, yTrain,xTestPCA,yTest, Lasso())
-    # print("LR Ridge Score \t" + str(scoreLRLasso))
-    #
-    # #decision tree regressor
-    # yHatDTR, scoreDTR = decTreeRegModel(xTrainPCA, yTrain, xTestPCA, yTest)
+    # print("LR Lasso Score with PCA \t" + str(scoreLRLasso))
+
+    #decision tree regressor
+    # yHatDTR, scoreDTR = decTreeRegModel(xTrain, yTrain, xTest, yTest)
+    # temp= DecisionTreeRegressor(max_depth=5)
+    # temp.fit(xTrain,yTrain)
+    # scoreDTR=temp.score(xTest,yTest)
     # print("DTR Score \t" + str(scoreDTR))
-    #
+    # featureCoefs = list(zip(temp.feature_importances_, xTrain.columns))
+    # for coef, feat in sorted(featureCoefs):
+    #     print(str(coef) + "\t" + str(feat))
+
+    # yHatDTR, scoreDTR = decTreeRegModel(xTrainPCA, yTrain, xTestPCA, yTest)
+    # temp= DecisionTreeRegressor(max_depth=5)
+    # temp.fit(xTrainPCA,yTrain)
+    # scoreDTR=temp.score(xTestPCA,yTest)
+    # print("DTR Score with PCA \t" + str(scoreDTR))
+
     # #perceptron #todo: is asking to be ravelled
-    # yHatPer, scorePer = perceptronModel(xTrainPCA, yTrain, xTestPCA, yTest)
-    # print("Perceptron Score \t" + str(scorePer))
+    yHatPer, scorePer = perceptronModel(xTrainPCA, yTrain, xTestPCA, yTest)
+    print("Perceptron Score \t" + str(scorePer))
 
 
 
